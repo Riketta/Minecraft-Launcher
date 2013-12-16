@@ -142,7 +142,6 @@ namespace MinecraftLauncher
         {
             if (File.Exists(MinecraftPath + @"\" + ConfigFile)) // Если файл конфига есть, то
             {
-                checkBox.Checked = true; // Установить чекбокс в положительное состояние
                 try
                 {
                     StreamReader Reader = new StreamReader(MinecraftPath + @"\" + ConfigFile);
@@ -150,12 +149,21 @@ namespace MinecraftLauncher
                     textBox_Password.Text = Reader.ReadLine().Trim(); // На второй - пароль
                     JavaMemory = Convert.ToInt32(Reader.ReadLine().Trim()); // На третьей - объем памяти
                     textBox_PersonalArgs.Text = Reader.ReadLine().Trim(); // На четвертой - персональные аргументы
+                    Reader.Close(); // Закрываем считывалку
 
                     textBox_JavaMemory.Text = JavaMemory.ToString();
+
+                    if (textBox_Password.Text.Length > 0)
+                    {
+                        checkBox.Checked = true; // Установить чекбокс в положительное состояние
+                        button_Start.Select(); // Берем в фокус кнопку запуска
+                    }
+                    else
+                        textBox_Password.Select(); // Если пароля нет, фокусируемся на поле ввода пароля
+
                 }
                 catch { label_Error.Text = "Не удалось загрузить настройки!"; } // Игнорировать возможную ошибку
 
-                button_Start.Select(); // Берем в фокус кнопку запуска
             }
         }
 
