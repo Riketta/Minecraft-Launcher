@@ -68,38 +68,40 @@ namespace MinecraftLauncher
 
         private void StartMinecraft()
         {
-            label_Error.Text = "Запуск игры..."; // Отчистить поле для ошибок
-
             try
             {
-                if (!IsUpdated) // Если обновление еще не проходило
+                if (textBox_Login.Text.Length > 0 && textBox_Password.Text.Length > 0) // Если игрок ввел данные
                 {
-                    button_Start.Enabled = false; // Отключим кнопку, дабы избежать даблкликов
-                    button_Start.Text = "Обновление"; // Выведем что сейчас идет обновление
+                    label_Error.Text = "Запуск игры..."; // Отчистить поле для ошибок
 
-                    UpdateThread = new Thread(ClientUpdate); // Запуск обновления в отдельном потоке
-                    UpdateThread.Start();
-
-                    // backgroundWorker.RunWorkerAsync(); // Проверка и загрузка недостающих файлов
-                }
-                else // Если обновлено
-                    if (textBox_Login.Text.Length > 0 && textBox_Password.Text.Length > 0) // Если игрок ввел данные
+                    if (!IsUpdated) // Если обновление еще не проходило
                     {
+                        button_Start.Enabled = false; // Отключим кнопку, дабы избежать даблкликов
+                        button_Start.Text = "Обновление"; // Выведем что сейчас идет обновление
+
+                        UpdateThread = new Thread(ClientUpdate); // Запуск обновления в отдельном потоке
+                        UpdateThread.Start();
+
+                        // backgroundWorker.RunWorkerAsync(); // Проверка и загрузка недостающих файлов
+                    }
+                    else // Если обновлено
+
                         if (IsSessionNeeded) // Если сессия нужна для онлайн-игры
                             GetSession(); // Получение сессии
 
-                        if (Session != "0" || !IsSessionNeeded) // Если мы успешно получили сессию либо играем оффлайн
-                        {
-                            //SaveConfig(); // Сохраняем параметры
-                            System.Diagnostics.Process Minecraft = new System.Diagnostics.Process();
-                            Minecraft.StartInfo.FileName = Environment.SystemDirectory + @"\javaw.exe"; // Запуск явы без консоли
-                            //Minecraft.StartInfo.FileName = "javaw"; // Запуск явы без консоли
-                            Minecraft.StartInfo.Arguments = ArgsInit(); // Инициализируем аргументы
-                            Minecraft.Start(); // Запускаем игру
+                    if (Session != "0" || !IsSessionNeeded) // Если мы успешно получили сессию либо играем оффлайн
+                    {
+                        //SaveConfig(); // Сохраняем параметры
+                        System.Diagnostics.Process Minecraft = new System.Diagnostics.Process();
+                        Minecraft.StartInfo.FileName = Environment.SystemDirectory + @"\javaw.exe"; // Запуск явы без консоли
+                        //Minecraft.StartInfo.FileName = "javaw"; // Запуск явы без консоли
+                        Minecraft.StartInfo.Arguments = ArgsInit(); // Инициализируем аргументы
+                        Minecraft.Start(); // Запускаем игру
 
-                            this.Close(); // Закрываем лаунчер
-                        }
+                        this.Close(); // Закрываем лаунчер
                     }
+                }
+                else label_Error.Text = "Введите логин и пароль!"; // Если данные не введены
             }
             catch { label_Error.Text += "Не удалось запустить игру!"; }
         }
