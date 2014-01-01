@@ -14,8 +14,8 @@ namespace MinecraftLauncher
     public partial class MainForm : Form
     {
         //string ServerIP = "127.0.0.1"; // Адрес веб-сервера Майнкрафта
-        //string ServerIP = "10.110.33.130"; // Адрес веб-сервера Майнкрафта
-        string ServerIP = "192.168.14.157"; // Адрес веб-сервера Майнкрафта
+        string ServerIP = "10.110.33.130"; // Адрес веб-сервера Майнкрафта
+        //string ServerIP = "192.168.14.157"; // Адрес веб-сервера Майнкрафта
         string MinecraftPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\.minecraft"; // Путь к игре
 
         string MainJar = @"\Main\Main.jar"; // Путь к главному бинарнику
@@ -45,7 +45,7 @@ namespace MinecraftLauncher
 
             LoadConfig(); // Загружаем конфигурацию лаунчера
             label_ServerAddres.Text = "Специально для http://" + ServerIP + "/"; // Информация о сервере
-            webBrowser.Url = new Uri("http://" + ServerIP + "/news.php"); // Страница на новости, RSS
+            webBrowser.Url = new Uri("http://" + ServerIP + "/mc/lnews.php"); // Страница на новости, RSS
 
             //Console.WriteLine(MinecraftPath);
         }
@@ -56,13 +56,12 @@ namespace MinecraftLauncher
 
         private void linkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            try { System.Diagnostics.Process.Start("http://" + ServerIP + "/reg.php"); } // Открыть ссылку регистрации
+            try { System.Diagnostics.Process.Start("http://" + ServerIP + "/mc/"); } // Открыть ссылку регистрации
             catch { }
         }
 
         private void button_Start_Click(object sender, EventArgs e)
         {
-            label_Error.Visible = true;
             StartMinecraft(); // Запуск игры
         }
 
@@ -70,6 +69,8 @@ namespace MinecraftLauncher
         {
             try
             {
+                label_Error.Visible = true;
+
                 if (textBox_Login.Text.Length > 0 && textBox_Password.Text.Length > 0) // Если игрок ввел данные
                 {
                     label_Error.Text = "Запуск игры..."; // Отчистить поле для ошибок
@@ -106,6 +107,15 @@ namespace MinecraftLauncher
             catch { label_Error.Text += "Не удалось запустить игру!"; }
         }
 
+        private void ClearLogin()
+        {
+            button_Start.Text = "Вход";
+            button_Start.Enabled = true;
+
+            IsUpdated = false;
+            IsSessionNeeded = true;
+        }
+
         private void GetSession()
         {
             // "$last_ver:0:$username:$sessionid";
@@ -113,7 +123,7 @@ namespace MinecraftLauncher
             try
             {
                 // Загружаем страницу для получения сессии, передаем нужные параметры и парсим сессию
-                HttpWebRequest Request = (HttpWebRequest)WebRequest.Create("http://" + ServerIP + "/client_login.php?version=" + LauncherVer + "&user=" + textBox_Login.Text + "&password=" + textBox_Password.Text);
+                HttpWebRequest Request = (HttpWebRequest)WebRequest.Create("http://" + ServerIP + "/mc/launcher.php?version=" + LauncherVer + "&user=" + textBox_Login.Text + "&password=" + textBox_Password.Text);
                 Request.Timeout = 5000; // Время предельного ожидания соединения 5 секунд
                 
                 HttpWebResponse Response = (HttpWebResponse)Request.GetResponse();
@@ -135,9 +145,13 @@ namespace MinecraftLauncher
                     }
                     else label_Error.Text = "Старая версия лаунчера!";
                 }
-                else label_Error.Text = "Вы указали неверные данные!";
+                else
+                {
+                    label_Error.Text = "Вы указали неверные данные!";
+                    ClearLogin();
+                }
             }
-            catch { label_Error.Text = "Невозможно соединиться с " + ServerIP + "! \n Сессия не получена!"; } // Избегаем возможной ошибки
+            catch { label_Error.Text = "Невозможно соединиться с " + ServerIP + "! \n Сессия не получена!"; ClearLogin(); } // Избегаем возможной ошибки
         }
 
         private void LoadConfig()
@@ -235,7 +249,7 @@ namespace MinecraftLauncher
                 label_Error.Text = "Проверка обновлений.";
 
                 // Загружаем страницу со списком файлов
-                HttpWebRequest Request = (HttpWebRequest)WebRequest.Create("http://" + ServerIP + "/MinecraftDownload/index.php");
+                HttpWebRequest Request = (HttpWebRequest)WebRequest.Create("http://" + ServerIP + "/mc/mc/MinecraftDownload/index.php");
                 Request.Timeout = 5000; // Время предельного ожидания соединения 5 секунд
 
                 HttpWebResponse Response = (HttpWebResponse)Request.GetResponse();
@@ -272,7 +286,7 @@ namespace MinecraftLauncher
                         File.Delete(MinecraftPath + FilePath); // Удалить этот файл
                         WebClient Downloader = new WebClient(); // Загрузить этот файл
 
-                        Downloader.DownloadFile("http://" + ServerIP + "/MinecraftDownload/files/" + FilePath.TrimStart('\\'), MinecraftPath + FilePath);
+                        Downloader.DownloadFile("http://" + ServerIP + "/mc/mc/MinecraftDownload/files/" + FilePath.TrimStart('\\'), MinecraftPath + FilePath);
                     }
                 }
 
@@ -344,6 +358,12 @@ namespace MinecraftLauncher
         private void backgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             ClientUpdate(); // Начинаем обновление в отдельном потоке
+        }
+
+        private void textBox_Password_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyValue == 13) // Enter
+                StartMinecraft(); // Запуск игры
         }
     }
 }
