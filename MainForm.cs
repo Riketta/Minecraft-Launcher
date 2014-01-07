@@ -18,11 +18,14 @@ namespace MinecraftLauncher
         //string ServerIP = "192.168.14.157"; // Адрес веб-сервера Майнкрафта
         string MinecraftPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\.minecraft"; // Путь к игре
 
+        string WebSubFolder = "/mc/";
+        //string WebSubFolder = "/";
+
         string MainJar = @"\Main\Main.jar"; // Путь к главному бинарнику
         string MainClass = "net.minecraft.launchwrapper.Launch"; // Основной класс бинарника
         string TweakClass = "cpw.mods.fml.common.launcher.FMLTweaker"; // Анон какой-то
 
-        string LauncherVer = "1_1_Riketta";
+        string LauncherVer = "1_3_Riketta";
 
         string ConfigFile = "minelauncher.conf";
 
@@ -34,6 +37,8 @@ namespace MinecraftLauncher
         bool IsUpdated = false;
         bool IsSessionNeeded = true;
 
+        bool IsXP = false;
+
         Thread UpdateThread;
 
         List<string> Args = new List<string>(); // Список аргументов для java
@@ -43,9 +48,15 @@ namespace MinecraftLauncher
             CheckForIllegalCrossThreadCalls = false; // Разрешаем обращаться к контролам из разных потоков
             InitializeComponent();
 
+            IsXP = WinXP();
+
+            if (IsXP) // Если XP
+                MinecraftPath = Directory.GetParent(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles)).FullName + @"\.minecraft"; // Меняем путь к игре
+
             LoadConfig(); // Загружаем конфигурацию лаунчера
+
             label_ServerAddres.Text = "Специально для http://" + ServerIP + "/"; // Информация о сервере
-            webBrowser.Url = new Uri("http://" + ServerIP + "/mc/lnews.php"); // Страница на новости, RSS
+            webBrowser.Url = new Uri("http://" + ServerIP + WebSubFolder + "lnews.php"); // Страница на новости, RSS
 
             //Console.WriteLine(MinecraftPath);
         }
@@ -54,15 +65,33 @@ namespace MinecraftLauncher
         {
         }
 
+        private bool WinXP()
+        {
+            if (Environment.OSVersion.Version.Major == 5)
+                return true;
+            else return false;
+        }
+
         private void linkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            try { System.Diagnostics.Process.Start("http://" + ServerIP + "/mc/"); } // Открыть ссылку регистрации
+            try { System.Diagnostics.Process.Start("http://" + ServerIP + WebSubFolder); } // Открыть ссылку регистрации
             catch { }
         }
 
         private void button_Start_Click(object sender, EventArgs e)
         {
             StartMinecraft(); // Запуск игры
+        }
+
+        private void CrashLog(Exception ex)
+        {
+            StreamWriter ExWriter = new StreamWriter(MinecraftPath + @"\LauncherExLog.txt", true); // Файл для отладки
+
+            ExWriter.WriteLine("################## " + DateTime.Now + " ##################");
+            ExWriter.WriteLine(ex.ToString());
+            ExWriter.WriteLine("################## - ##################\n\n");
+
+            ExWriter.Close();
         }
 
         private void StartMinecraft()
@@ -73,7 +102,7 @@ namespace MinecraftLauncher
 
                 if (textBox_Login.Text.Length > 0 && textBox_Password.Text.Length > 0) // Если игрок ввел данные
                 {
-                    label_Error.Text = "Запуск игры..."; // Отчистить поле для ошибок
+                    label_Error.Text = "Запуск игры... "; // Отчистить поле для ошибок
 
                     if (!IsUpdated) // Если обновление еще не проходило
                     {
@@ -86,25 +115,35 @@ namespace MinecraftLauncher
                         // backgroundWorker.RunWorkerAsync(); // Проверка и загрузка недостающих файлов
                     }
                     else // Если обновлено
-
                         if (IsSessionNeeded) // Если сессия нужна для онлайн-игры
                             GetSession(); // Получение сессии
 
                     if (Session != "0" || !IsSessionNeeded) // Если мы успешно получили сессию либо играем оффлайн
                     {
-                        //SaveConfig(); // Сохраняем параметры
                         System.Diagnostics.Process Minecraft = new System.Diagnostics.Process();
-                        Minecraft.StartInfo.FileName = Environment.SystemDirectory + @"\javaw.exe"; // Запуск явы без консоли
-                        //Minecraft.StartInfo.FileName = "javaw"; // Запуск явы без консоли
-                        Minecraft.StartInfo.Arguments = ArgsInit(); // Инициализируем аргументы
-                        Minecraft.Start(); // Запускаем игру
 
+                        if (!IsXP) // Если актуальная система
+                        {
+                            //SaveConfig(); // Сохраняем параметры
+                            //Minecraft.StartInfo.FileName = Environment.SystemDirectory + @"\javaw.exe"; // Запуск явы без консоли
+                            Minecraft.StartInfo.FileName = "javaw"; // Запуск явы без консоли
+                            Minecraft.StartInfo.Arguments = ArgsInit(); // Инициализируем аргументы
+                        }
+                        else // Если XP
+                        {
+                            Minecraft.StartInfo.FileName = @"cmd"; // Запуск системной консоли
+                            Minecraft.StartInfo.CreateNoWindow = false; // Прячем окно консоли
+                            Minecraft.StartInfo.Arguments = "/c start javaw " + ArgsInit(); // Инициализируем аргументы
+                            Console.WriteLine(ArgsInit());
+                        }
+
+                        Minecraft.Start(); // Запускаем игру
                         this.Close(); // Закрываем лаунчер
                     }
                 }
                 else label_Error.Text = "Введите логин и пароль!"; // Если данные не введены
             }
-            catch { label_Error.Text += "Не удалось запустить игру!"; }
+            catch (Exception ex) { label_Error.Text += "Не удалось запустить игру!"; CrashLog(ex); }
         }
 
         private void ClearLogin()
@@ -123,7 +162,7 @@ namespace MinecraftLauncher
             try
             {
                 // Загружаем страницу для получения сессии, передаем нужные параметры и парсим сессию
-                HttpWebRequest Request = (HttpWebRequest)WebRequest.Create("http://" + ServerIP + "/mc/launcher.php?version=" + LauncherVer + "&user=" + textBox_Login.Text + "&password=" + textBox_Password.Text);
+                HttpWebRequest Request = (HttpWebRequest)WebRequest.Create("http://" + ServerIP + WebSubFolder + "launcher.php?version=" + LauncherVer + "&user=" + textBox_Login.Text + "&password=" + textBox_Password.Text);
                 Request.Timeout = 5000; // Время предельного ожидания соединения 5 секунд
                 
                 HttpWebResponse Response = (HttpWebResponse)Request.GetResponse();
@@ -151,7 +190,7 @@ namespace MinecraftLauncher
                     ClearLogin();
                 }
             }
-            catch { label_Error.Text = "Невозможно соединиться с " + ServerIP + "! \n Сессия не получена!"; ClearLogin(); } // Избегаем возможной ошибки
+            catch (Exception ex) { label_Error.Text = "Невозможно соединиться с " + ServerIP + "! \n Сессия не получена!"; ClearLogin(); CrashLog(ex); } // Избегаем возможной ошибки
         }
 
         private void LoadConfig()
@@ -178,8 +217,7 @@ namespace MinecraftLauncher
                         textBox_Password.Select(); // Если пароля нет, фокусируемся на поле ввода пароля
 
                 }
-                catch { label_Error.Text = "Не удалось загрузить настройки!"; } // Игнорировать возможную ошибку
-
+                catch (Exception ex){ label_Error.Text = "Не удалось загрузить настройки!"; CrashLog(ex); } // Игнорировать возможную ошибку
             }
         }
 
@@ -199,7 +237,7 @@ namespace MinecraftLauncher
                 Writer.WriteLine(textBox_PersonalArgs.Text); // Записываем персональные аргументы
                 Writer.Close();
             }
-            catch { label_Error.Text = "Не удалось сохранить настройки!"; } // Игнорировать возможную ошибку
+            catch (Exception ex) { label_Error.Text = "Не удалось сохранить настройки!"; CrashLog(ex); } // Игнорировать возможную ошибку
             //File.Delete(MinecraftPath + @"\" + ConfigFile); // Если файл есть - удалить
         }
 
@@ -211,10 +249,11 @@ namespace MinecraftLauncher
             Args.Add("-Djava.library.path=" + MinecraftPath + @"\versions\Main\natives ");
 
             // Рекурсивно получить все классы
-            string[] Libs = Directory.GetFiles(MinecraftPath + @"\libraries\", "*.jar", SearchOption.AllDirectories);
+            //string[] Libs = Directory.GetFiles(MinecraftPath + @"\libraries\", "*.jar", SearchOption.AllDirectories);
+            string[] Libs = Directory.GetFiles(MinecraftPath + @"\libraries\", "*.jar", SearchOption.TopDirectoryOnly);
             Args.Add("-cp "); // Добавить флаг -cp
             foreach (string Lib in Libs) // Перебор найденных библиотек
-                Args.Add(Lib + ";"); // Добавить все библиотеки к -cp
+                Args.Add("\"" + Lib + "\"" + ";"); // Добавить все библиотеки к -cp
 
             Args.Add(MinecraftPath + @"\versions" + MainJar + " " + MainClass + " "); // Бинарный файл Minecraft'а
 
@@ -232,15 +271,11 @@ namespace MinecraftLauncher
             foreach (string Arg in Args)
                 FullArgs += Arg; // Добавим аргумент к списку аргументов
 
-            //Console.WriteLine(FullArgs);
-
             return FullArgs;
         }
 
         private void ClientUpdate()
         {
-            //Console.WriteLine("Update");
-
             if (Directory.Exists(MinecraftPath))
                 Directory.CreateDirectory(MinecraftPath); // Создать папку игры, если ее нет
 
@@ -249,7 +284,7 @@ namespace MinecraftLauncher
                 label_Error.Text = "Проверка обновлений.";
 
                 // Загружаем страницу со списком файлов
-                HttpWebRequest Request = (HttpWebRequest)WebRequest.Create("http://" + ServerIP + "/mc/mc/MinecraftDownload/index.php");
+                HttpWebRequest Request = (HttpWebRequest)WebRequest.Create("http://" + ServerIP + WebSubFolder + "mc/MinecraftDownload/index.php");
                 Request.Timeout = 5000; // Время предельного ожидания соединения 5 секунд
 
                 HttpWebResponse Response = (HttpWebResponse)Request.GetResponse();
@@ -265,6 +300,7 @@ namespace MinecraftLauncher
                 string[] Files = html.Split('|'); // Разделяем все строки и игнорируем пустые
 
                 List<string> ServerMods = new List<string>(); // Список модов сервера
+                List<string> ServerLibs = new List<string>(); // Список библиотек сервера
 
                 foreach (string FileData in Files) // Перебираем все файлы и загружаем что нужно
                 {
@@ -275,6 +311,8 @@ namespace MinecraftLauncher
 
                     if (FilePath.StartsWith(@"\mods\")) // Если этот файл - мод
                         ServerMods.Add(FilePath.Replace(@"\mods\", "")); // Добавим его в перечень модов, удалим путь
+                    else if (FilePath.StartsWith(@"\libraries\")) // Если этот файл - библиотека
+                        ServerMods.Add(FilePath.Replace(@"\libraries\", "")); // Добавим его в перечень библиотек, удалим путь
 
                     FileInfo Info = new FileInfo(MinecraftPath + FilePath); // Получаем информацию о файле
                     if (!File.Exists(MinecraftPath + FilePath) || Info.Length != FileSize) // Если файла нет или размер не совпал
@@ -282,16 +320,15 @@ namespace MinecraftLauncher
                         if (!Directory.Exists(Info.DirectoryName)) // Если такой папки еще нет
                             Directory.CreateDirectory(Info.DirectoryName); // Создадим папку для файла или структуру папок
                         
-                        label_Error.Text = "Обновление:\n Загрузка " + FilePath.TrimStart('\\');
+                        label_Error.Text = "Обновление:\nЗагрузка " + FilePath.TrimStart('\\');
                         File.Delete(MinecraftPath + FilePath); // Удалить этот файл
                         WebClient Downloader = new WebClient(); // Загрузить этот файл
 
-                        Downloader.DownloadFile("http://" + ServerIP + "/mc/mc/MinecraftDownload/files/" + FilePath.TrimStart('\\'), MinecraftPath + FilePath);
+                        Downloader.DownloadFile("http://" + ServerIP + WebSubFolder + "mc/MinecraftDownload/files/" + FilePath.TrimStart('\\'), MinecraftPath + FilePath);
                     }
                 }
 
                 string[] ClientMods = Directory.GetFiles(MinecraftPath + @"\mods\"); // Получаем все моды
-
                 foreach (string ClientMod in ClientMods) // Сравниваем моды на сервере и на клиенте, удаляем лишние
                 {
                     FileInfo Mod = new FileInfo(ClientMod); // Получаем сам файл
@@ -304,8 +341,25 @@ namespace MinecraftLauncher
                     if (!IsOk) // Если такого мода нет
                         File.Delete(ClientMod); // Удаляем мод
                 }
+
+                string[] ClientLibs = Directory.GetFiles(MinecraftPath + @"\libraries\"); // Получаем все либы
+                foreach (string ClientLib in ClientLibs) // Сравниваем моды на сервере и на клиенте, удаляем лишние
+                {
+                    FileInfo Lib = new FileInfo(ClientLib); // Получаем сам файл
+                    bool IsOk = false; // Переменная для сверки, в наличии ли библиотека
+
+                    foreach (string ServerMod in ServerMods)
+                        if (Lib.Name == ServerMod) // Если такая либа на сервере есть
+                        {
+                            IsOk = true; // Говорим что ее удалять не надо
+                            break; // Выходим из цикла
+                        }
+
+                    if (!IsOk) // Если такой либы нет
+                        File.Delete(ClientLib); // Удаляем ее
+                }
             }
-            catch // Ловим возможное исключение
+            catch (Exception ex) // Ловим возможное исключение
             { 
                 label_Error.Text = "Не удалось обновить клиент!";
 
@@ -313,6 +367,8 @@ namespace MinecraftLauncher
                 button_Start.Text = "Играть оффлайн"; // Выведем что сейчас идет обновление
 
                 IsSessionNeeded = false; // Сообщаем игре что сессия не нужна и играть будем оффлайн
+
+                CrashLog(ex);
             } 
 
             IsUpdated = true; // Ставим флаг обновления в положительное состояние
@@ -361,6 +417,12 @@ namespace MinecraftLauncher
         }
 
         private void textBox_Password_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyValue == 13) // Enter
+                StartMinecraft(); // Запуск игры
+        }
+
+        private void textBox_Login_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyValue == 13) // Enter
                 StartMinecraft(); // Запуск игры

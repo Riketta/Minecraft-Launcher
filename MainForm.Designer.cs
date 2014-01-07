@@ -133,6 +133,7 @@
             this.textBox_Login.Name = "textBox_Login";
             this.textBox_Login.Size = new System.Drawing.Size(142, 20);
             this.textBox_Login.TabIndex = 1;
+            this.textBox_Login.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBox_Login_KeyDown);
             // 
             // button_Start
             // 
@@ -227,7 +228,7 @@
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(62, 15);
             this.label6.TabIndex = 32;
-            this.label6.Text = "Version 1.1";
+            this.label6.Text = "Version 1.3";
             // 
             // label_ServerAddres
             // 
