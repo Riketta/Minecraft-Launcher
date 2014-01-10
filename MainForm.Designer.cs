@@ -47,6 +47,8 @@
             this.label5 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.label_ServerAddres = new System.Windows.Forms.Label();
+            this.checkBox_IsDebug = new System.Windows.Forms.CheckBox();
+            this.button_PlayOffline = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
             this.SuspendLayout();
             // 
@@ -224,11 +226,11 @@
             // label6
             // 
             this.label6.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.label6.Location = new System.Drawing.Point(710, 320);
+            this.label6.Location = new System.Drawing.Point(700, 320);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(62, 15);
+            this.label6.Size = new System.Drawing.Size(72, 15);
             this.label6.TabIndex = 32;
-            this.label6.Text = "Version 1.3";
+            this.label6.Text = "Version 1.3.1";
             // 
             // label_ServerAddres
             // 
@@ -239,6 +241,26 @@
             this.label_ServerAddres.Size = new System.Drawing.Size(2, 15);
             this.label_ServerAddres.TabIndex = 33;
             // 
+            // checkBox_IsDebug
+            // 
+            this.checkBox_IsDebug.AutoSize = true;
+            this.checkBox_IsDebug.Location = new System.Drawing.Point(184, 169);
+            this.checkBox_IsDebug.Name = "checkBox_IsDebug";
+            this.checkBox_IsDebug.Size = new System.Drawing.Size(105, 17);
+            this.checkBox_IsDebug.TabIndex = 34;
+            this.checkBox_IsDebug.Text = "Режим отладки";
+            this.checkBox_IsDebug.UseVisualStyleBackColor = true;
+            // 
+            // button_PlayOffline
+            // 
+            this.button_PlayOffline.Location = new System.Drawing.Point(184, 263);
+            this.button_PlayOffline.Name = "button_PlayOffline";
+            this.button_PlayOffline.Size = new System.Drawing.Size(101, 23);
+            this.button_PlayOffline.TabIndex = 35;
+            this.button_PlayOffline.Text = "Играть оффлайн";
+            this.button_PlayOffline.UseVisualStyleBackColor = true;
+            this.button_PlayOffline.Click += new System.EventHandler(this.button_PlayOffline_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -246,6 +268,8 @@
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.ClientSize = new System.Drawing.Size(784, 461);
             this.Controls.Add(this.webBrowser);
+            this.Controls.Add(this.button_PlayOffline);
+            this.Controls.Add(this.checkBox_IsDebug);
             this.Controls.Add(this.label_Error);
             this.Controls.Add(this.label_ServerAddres);
             this.Controls.Add(this.label6);
@@ -295,6 +319,8 @@
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label label_ServerAddres;
+        private System.Windows.Forms.CheckBox checkBox_IsDebug;
+        private System.Windows.Forms.Button button_PlayOffline;
 
     }
 }

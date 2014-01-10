@@ -32,10 +32,12 @@ namespace MinecraftLauncher
         string Session = "0"; // Для сессии
         string GameVersion = "1_6_4"; // Версия клиента
 
+        int TimeOut = 15000; // Время таймаута в мс для http
+        
         int JavaMemory = 2048; // Предельная память для javaw
 
         bool IsUpdated = false;
-        bool IsSessionNeeded = true;
+        bool IsSessionGet = false;
 
         bool IsXP = false;
 
@@ -98,61 +100,63 @@ namespace MinecraftLauncher
         {
             try
             {
+                button_Start.Enabled = false; // Отключим кнопку, дабы избежать даблкликов
                 label_Error.Visible = true;
 
                 if (textBox_Login.Text.Length > 0 && textBox_Password.Text.Length > 0) // Если игрок ввел данные
                 {
-                    label_Error.Text = "Запуск игры... "; // Отчистить поле для ошибок
-
                     if (!IsUpdated) // Если обновление еще не проходило
                     {
-                        button_Start.Enabled = false; // Отключим кнопку, дабы избежать даблкликов
-                        button_Start.Text = "Обновление"; // Выведем что сейчас идет обновление
-
                         UpdateThread = new Thread(ClientUpdate); // Запуск обновления в отдельном потоке
                         UpdateThread.Start();
 
                         // backgroundWorker.RunWorkerAsync(); // Проверка и загрузка недостающих файлов
                     }
                     else // Если обновлено
-                        if (IsSessionNeeded) // Если сессия нужна для онлайн-игры
+                        if (!IsSessionGet) // Если сессия еще не получена
                             GetSession(); // Получение сессии
 
-                    if (Session != "0" || !IsSessionNeeded) // Если мы успешно получили сессию либо играем оффлайн
-                    {
-                        System.Diagnostics.Process Minecraft = new System.Diagnostics.Process();
-
-                        if (!IsXP) // Если актуальная система
-                        {
-                            //SaveConfig(); // Сохраняем параметры
-                            //Minecraft.StartInfo.FileName = Environment.SystemDirectory + @"\javaw.exe"; // Запуск явы без консоли
-                            Minecraft.StartInfo.FileName = "javaw"; // Запуск явы без консоли
-                            Minecraft.StartInfo.Arguments = ArgsInit(); // Инициализируем аргументы
-                        }
-                        else // Если XP
-                        {
-                            Minecraft.StartInfo.FileName = @"cmd"; // Запуск системной консоли
-                            Minecraft.StartInfo.CreateNoWindow = false; // Прячем окно консоли
-                            Minecraft.StartInfo.Arguments = "/c start javaw " + ArgsInit(); // Инициализируем аргументы
-                            Console.WriteLine(ArgsInit());
-                        }
-
-                        Minecraft.Start(); // Запускаем игру
-                        this.Close(); // Закрываем лаунчер
-                    }
+                    if (Session != "0" && IsSessionGet) // Если сессия получена
+                        LaunchMinecraft(); // Запускаем сам клиент
                 }
                 else label_Error.Text = "Введите логин и пароль!"; // Если данные не введены
             }
-            catch (Exception ex) { label_Error.Text += "Не удалось запустить игру!"; CrashLog(ex); }
+            catch (Exception ex) { label_Error.Text += "Не удалось запустить игру!"; ClearLogin(); CrashLog(ex); }
+        }
+
+        private void LaunchMinecraft()
+        {
+            label_Error.Text = "Запуск игры... "; // Отчистить поле для ошибок
+            System.Diagnostics.Process Minecraft = new System.Diagnostics.Process();
+
+            if (!IsXP) // Если актуальная система
+            {
+                if (checkBox_IsDebug.Checked)
+                    Minecraft.StartInfo.FileName = "java"; // Запуск явы с консолью для отладки
+                else Minecraft.StartInfo.FileName = "javaw"; // Запуск явы без консоли
+
+                Minecraft.StartInfo.Arguments = ArgsInit(); // Инициализируем аргументы
+            }
+            else // Если XP
+            {
+                Minecraft.StartInfo.FileName = @"cmd"; // Запуск системной консоли
+                Minecraft.StartInfo.CreateNoWindow = false; // Прячем окно консоли
+                if (checkBox_IsDebug.Checked)
+                    Minecraft.StartInfo.Arguments = "/c start java " + ArgsInit(); // Инициализируем аргументы. Для отладки
+                else Minecraft.StartInfo.Arguments = "/c start javaw " + ArgsInit(); // Инициализируем аргументы, для игры
+                Console.WriteLine(ArgsInit());
+            }
+
+            Minecraft.Start(); // Запускаем игру
+            this.Close(); // Закрываем лаунчер
         }
 
         private void ClearLogin()
         {
-            button_Start.Text = "Вход";
             button_Start.Enabled = true;
 
             IsUpdated = false;
-            IsSessionNeeded = true;
+            IsSessionGet = false;
         }
 
         private void GetSession()
@@ -163,7 +167,7 @@ namespace MinecraftLauncher
             {
                 // Загружаем страницу для получения сессии, передаем нужные параметры и парсим сессию
                 HttpWebRequest Request = (HttpWebRequest)WebRequest.Create("http://" + ServerIP + WebSubFolder + "launcher.php?version=" + LauncherVer + "&user=" + textBox_Login.Text + "&password=" + textBox_Password.Text);
-                Request.Timeout = 5000; // Время предельного ожидания соединения 5 секунд
+                Request.Timeout = TimeOut; // Время предельного ожидания соединения n секунд
                 
                 HttpWebResponse Response = (HttpWebResponse)Request.GetResponse();
 
@@ -180,6 +184,8 @@ namespace MinecraftLauncher
                         string[] Data = html.Split(':'); // Режем ответ
                         Session = Data[3].Replace("\n", "").Replace("\r", "").Trim(); // Получаем сессию
 
+                        IsSessionGet = true; // Говорим что сессия уже не нужна
+
                         //Console.Write(Session);
                     }
                     else label_Error.Text = "Старая версия лаунчера!";
@@ -190,7 +196,12 @@ namespace MinecraftLauncher
                     ClearLogin();
                 }
             }
-            catch (Exception ex) { label_Error.Text = "Невозможно соединиться с " + ServerIP + "! \n Сессия не получена!"; ClearLogin(); CrashLog(ex); } // Избегаем возможной ошибки
+            catch (Exception ex) 
+            { 
+                label_Error.Text = "Невозможно соединиться с " + ServerIP + "!\nСессия не получена!"; 
+                ClearLogin();
+                CrashLog(ex);
+            } // Избегаем возможной ошибки
         }
 
         private void LoadConfig()
@@ -257,7 +268,7 @@ namespace MinecraftLauncher
 
             Args.Add(MinecraftPath + @"\versions" + MainJar + " " + MainClass + " "); // Бинарный файл Minecraft'а
 
-            Args.Add("--username " + textBox_Login.Text + " ");
+            Args.Add("--username " + textBox_Login.Text.Trim() + " ");
             Args.Add("--session " + Session + " ");
             Args.Add("--version " + GameVersion + " ");
             Args.Add("--gameDir " + MinecraftPath + " ");
@@ -281,11 +292,11 @@ namespace MinecraftLauncher
 
             try
             {
-                label_Error.Text = "Проверка обновлений.";
+                label_Error.Text = "Проверка обновлений...";
 
                 // Загружаем страницу со списком файлов
                 HttpWebRequest Request = (HttpWebRequest)WebRequest.Create("http://" + ServerIP + WebSubFolder + "mc/MinecraftDownload/index.php");
-                Request.Timeout = 5000; // Время предельного ожидания соединения 5 секунд
+                Request.Timeout = TimeOut; // Время предельного ожидания соединения n секунд
 
                 HttpWebResponse Response = (HttpWebResponse)Request.GetResponse();
 
@@ -358,28 +369,22 @@ namespace MinecraftLauncher
                     if (!IsOk) // Если такой либы нет
                         File.Delete(ClientLib); // Удаляем ее
                 }
+
+                IsUpdated = true; // Ставим флаг обновления в положительное состояние
+                StartMinecraft(); // Перезапускаем процесс начала игры
             }
             catch (Exception ex) // Ловим возможное исключение
-            { 
+            {
                 label_Error.Text = "Не удалось обновить клиент!";
 
-                button_Start.Enabled = true; // Отключим кнопку, дабы избежать даблкликов
-                button_Start.Text = "Играть оффлайн"; // Выведем что сейчас идет обновление
-
-                IsSessionNeeded = false; // Сообщаем игре что сессия не нужна и играть будем оффлайн
-
+                Console.WriteLine(ex);
+                
+                ClearLogin();
                 CrashLog(ex);
             } 
 
-            IsUpdated = true; // Ставим флаг обновления в положительное состояние
-
-            StartMinecraft(); // Перезапускаем процесс начала игры
-
             try { UpdateThread.Abort(); } // Завершаем работу потока
             catch { }
-
-            //try { backgroundWorker.CancelAsync(); } // Завершаем работу потока
-            //catch { }
         }
 
         private void button_Options_Click(object sender, EventArgs e)
@@ -395,6 +400,8 @@ namespace MinecraftLauncher
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             SaveConfig(); // Сохранить настройки при закрытии лаунчера
+            try { UpdateThread.Abort(); } // Завершаем работу потока обновления
+            catch { }
         }
 
         private void pictureBox_Click(object sender, EventArgs e)
@@ -426,6 +433,13 @@ namespace MinecraftLauncher
         {
             if (e.KeyValue == 13) // Enter
                 StartMinecraft(); // Запуск игры
+        }
+
+        private void button_PlayOffline_Click(object sender, EventArgs e)
+        {
+            Session = "Offline";
+            textBox_Login.Text = "Offline";
+            LaunchMinecraft();
         }
     }
 }
