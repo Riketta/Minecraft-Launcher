@@ -29,7 +29,6 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            this.webBrowser = new System.Windows.Forms.WebBrowser();
             this.pictureBox = new System.Windows.Forms.PictureBox();
             this.checkBox = new System.Windows.Forms.CheckBox();
             this.button_Options = new System.Windows.Forms.Button();
@@ -45,24 +44,13 @@
             this.textBox_JavaMemory = new System.Windows.Forms.TextBox();
             this.textBox_PersonalArgs = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
-            this.label6 = new System.Windows.Forms.Label();
+            this.label_Version = new System.Windows.Forms.Label();
             this.label_ServerAddres = new System.Windows.Forms.Label();
             this.checkBox_IsDebug = new System.Windows.Forms.CheckBox();
             this.button_PlayOffline = new System.Windows.Forms.Button();
+            this.webBrowser = new System.Windows.Forms.WebBrowser();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
             this.SuspendLayout();
-            // 
-            // webBrowser
-            // 
-            this.webBrowser.AllowNavigation = false;
-            this.webBrowser.Dock = System.Windows.Forms.DockStyle.Top;
-            this.webBrowser.IsWebBrowserContextMenuEnabled = false;
-            this.webBrowser.Location = new System.Drawing.Point(0, 0);
-            this.webBrowser.MinimumSize = new System.Drawing.Size(20, 20);
-            this.webBrowser.Name = "webBrowser";
-            this.webBrowser.Size = new System.Drawing.Size(784, 350);
-            this.webBrowser.TabIndex = 10;
-            this.webBrowser.WebBrowserShortcutsEnabled = false;
             // 
             // pictureBox
             // 
@@ -223,14 +211,13 @@
             this.label5.TabIndex = 30;
             this.label5.Text = "Прочие аргументы";
             // 
-            // label6
+            // label_Version
             // 
-            this.label6.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.label6.Location = new System.Drawing.Point(700, 320);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(72, 15);
-            this.label6.TabIndex = 32;
-            this.label6.Text = "Version 1.3.1";
+            this.label_Version.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.label_Version.Location = new System.Drawing.Point(700, 320);
+            this.label_Version.Name = "label_Version";
+            this.label_Version.Size = new System.Drawing.Size(72, 15);
+            this.label_Version.TabIndex = 32;
             // 
             // label_ServerAddres
             // 
@@ -261,6 +248,18 @@
             this.button_PlayOffline.UseVisualStyleBackColor = true;
             this.button_PlayOffline.Click += new System.EventHandler(this.button_PlayOffline_Click);
             // 
+            // webBrowser
+            // 
+            this.webBrowser.AllowNavigation = false;
+            this.webBrowser.Dock = System.Windows.Forms.DockStyle.Top;
+            this.webBrowser.IsWebBrowserContextMenuEnabled = false;
+            this.webBrowser.Location = new System.Drawing.Point(0, 0);
+            this.webBrowser.MinimumSize = new System.Drawing.Size(20, 20);
+            this.webBrowser.Name = "webBrowser";
+            this.webBrowser.Size = new System.Drawing.Size(784, 350);
+            this.webBrowser.TabIndex = 10;
+            this.webBrowser.WebBrowserShortcutsEnabled = false;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -272,7 +271,7 @@
             this.Controls.Add(this.checkBox_IsDebug);
             this.Controls.Add(this.label_Error);
             this.Controls.Add(this.label_ServerAddres);
-            this.Controls.Add(this.label6);
+            this.Controls.Add(this.label_Version);
             this.Controls.Add(this.textBox_PersonalArgs);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.textBox_JavaMemory);
@@ -301,7 +300,6 @@
 
         #endregion
 
-        private System.Windows.Forms.WebBrowser webBrowser;
         private System.Windows.Forms.PictureBox pictureBox;
         private System.Windows.Forms.CheckBox checkBox;
         private System.Windows.Forms.Button button_Options;
@@ -317,10 +315,11 @@
         private System.Windows.Forms.TextBox textBox_JavaMemory;
         private System.Windows.Forms.TextBox textBox_PersonalArgs;
         private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Label label_Version;
         private System.Windows.Forms.Label label_ServerAddres;
         private System.Windows.Forms.CheckBox checkBox_IsDebug;
         private System.Windows.Forms.Button button_PlayOffline;
+        private System.Windows.Forms.WebBrowser webBrowser;
 
     }
 }

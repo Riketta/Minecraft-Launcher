@@ -25,14 +25,16 @@ namespace MinecraftLauncher
         string MainClass = "net.minecraft.launchwrapper.Launch"; // Основной класс бинарника
         string TweakClass = "cpw.mods.fml.common.launcher.FMLTweaker"; // Анон какой-то
 
-        string LauncherVer = "1_3_Riketta";
+
+        string LauncherVersion = "1.3.2";
+        string LauncherPHPVer = "_Riketta";
 
         string ConfigFile = "minelauncher.conf";
 
         string Session = "0"; // Для сессии
         string GameVersion = "1_6_4"; // Версия клиента
 
-        int TimeOut = 15000; // Время таймаута в мс для http
+        int TimeOut = 10000; // Время таймаута в мс для http
         
         int JavaMemory = 2048; // Предельная память для javaw
 
@@ -50,8 +52,10 @@ namespace MinecraftLauncher
             CheckForIllegalCrossThreadCalls = false; // Разрешаем обращаться к контролам из разных потоков
             InitializeComponent();
 
+            label_Version.Text = "Version " + LauncherVersion;
+            LauncherPHPVer = LauncherVersion.Replace('.', '_') + LauncherPHPVer;
+            
             IsXP = WinXP();
-
             if (IsXP) // Если XP
                 MinecraftPath = Directory.GetParent(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles)).FullName + @"\.minecraft"; // Меняем путь к игре
 
@@ -89,9 +93,9 @@ namespace MinecraftLauncher
         {
             StreamWriter ExWriter = new StreamWriter(MinecraftPath + @"\LauncherExLog.txt", true); // Файл для отладки
 
-            ExWriter.WriteLine("################## " + DateTime.Now + " ##################");
+            ExWriter.WriteLine("################## [" + DateTime.Now + "] ##################");
             ExWriter.WriteLine(ex.ToString());
-            ExWriter.WriteLine("################## - ##################\n\n");
+            ExWriter.WriteLine("========================= - =========================\n\n");
 
             ExWriter.Close();
         }
@@ -113,10 +117,10 @@ namespace MinecraftLauncher
                         // backgroundWorker.RunWorkerAsync(); // Проверка и загрузка недостающих файлов
                     }
                     else // Если обновлено
-                        if (!IsSessionGet) // Если сессия еще не получена
+                        //if (!IsSessionGet) // Если сессия еще не получена
                             GetSession(); // Получение сессии
 
-                    if (Session != "0" && IsSessionGet) // Если сессия получена
+                    if (Session != "0") // && IsSessionGet) // Если сессия получена
                         LaunchMinecraft(); // Запускаем сам клиент
                 }
                 else label_Error.Text = "Введите логин и пароль!"; // Если данные не введены
@@ -139,12 +143,12 @@ namespace MinecraftLauncher
             }
             else // Если XP
             {
-                Minecraft.StartInfo.FileName = @"cmd"; // Запуск системной консоли
+                Minecraft.StartInfo.FileName = "cmd"; // Запуск системной консоли
                 Minecraft.StartInfo.CreateNoWindow = false; // Прячем окно консоли
                 if (checkBox_IsDebug.Checked)
                     Minecraft.StartInfo.Arguments = "/c start java " + ArgsInit(); // Инициализируем аргументы. Для отладки
                 else Minecraft.StartInfo.Arguments = "/c start javaw " + ArgsInit(); // Инициализируем аргументы, для игры
-                Console.WriteLine(ArgsInit());
+                //Console.WriteLine(ArgsInit());
             }
 
             Minecraft.Start(); // Запускаем игру
@@ -156,7 +160,7 @@ namespace MinecraftLauncher
             button_Start.Enabled = true;
 
             IsUpdated = false;
-            IsSessionGet = false;
+            //IsSessionGet = false;
         }
 
         private void GetSession()
@@ -166,7 +170,7 @@ namespace MinecraftLauncher
             try
             {
                 // Загружаем страницу для получения сессии, передаем нужные параметры и парсим сессию
-                HttpWebRequest Request = (HttpWebRequest)WebRequest.Create("http://" + ServerIP + WebSubFolder + "launcher.php?version=" + LauncherVer + "&user=" + textBox_Login.Text + "&password=" + textBox_Password.Text);
+                HttpWebRequest Request = (HttpWebRequest)WebRequest.Create("http://" + ServerIP + WebSubFolder + "launcher.php?version=" + LauncherPHPVer + "&user=" + textBox_Login.Text + "&password=" + textBox_Password.Text);
                 Request.Timeout = TimeOut; // Время предельного ожидания соединения n секунд
                 
                 HttpWebResponse Response = (HttpWebResponse)Request.GetResponse();
@@ -184,11 +188,11 @@ namespace MinecraftLauncher
                         string[] Data = html.Split(':'); // Режем ответ
                         Session = Data[3].Replace("\n", "").Replace("\r", "").Trim(); // Получаем сессию
 
-                        IsSessionGet = true; // Говорим что сессия уже не нужна
+                        //IsSessionGet = true; // Говорим что сессия уже не нужна при повторном вызове той функции
 
                         //Console.Write(Session);
                     }
-                    else label_Error.Text = "Старая версия лаунчера!";
+                    else label_Error.Text = "Старая версия лаунчера!\nСкачайте новую на сайте!";
                 }
                 else
                 {
@@ -198,7 +202,7 @@ namespace MinecraftLauncher
             }
             catch (Exception ex) 
             { 
-                label_Error.Text = "Невозможно соединиться с " + ServerIP + "!\nСессия не получена!"; 
+                label_Error.Text = "Невозможно соединиться с " + ServerIP + "!\nСессия не получена!\nПопробуйте снова!"; 
                 ClearLogin();
                 CrashLog(ex);
             } // Избегаем возможной ошибки
@@ -261,7 +265,7 @@ namespace MinecraftLauncher
 
             // Рекурсивно получить все классы
             //string[] Libs = Directory.GetFiles(MinecraftPath + @"\libraries\", "*.jar", SearchOption.AllDirectories);
-            string[] Libs = Directory.GetFiles(MinecraftPath + @"\libraries\", "*.jar", SearchOption.TopDirectoryOnly);
+            string[] Libs = Directory.GetFiles(MinecraftPath + @"\libraries\", "*.jar", SearchOption.TopDirectoryOnly); // все директории?
             Args.Add("-cp "); // Добавить флаг -cp
             foreach (string Lib in Libs) // Перебор найденных библиотек
                 Args.Add("\"" + Lib + "\"" + ";"); // Добавить все библиотеки к -cp
@@ -437,8 +441,8 @@ namespace MinecraftLauncher
 
         private void button_PlayOffline_Click(object sender, EventArgs e)
         {
+            //IsSessionGet = true; // Говорим что сессия уже не нужна
             Session = "Offline";
-            textBox_Login.Text = "Offline";
             LaunchMinecraft();
         }
     }

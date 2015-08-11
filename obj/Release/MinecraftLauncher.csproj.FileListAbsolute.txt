@@ -1,0 +1,8 @@
+D:\Git\MinecraftLauncher\bin\Release\MinecraftLauncher.exe
+D:\Git\MinecraftLauncher\bin\Release\MinecraftLauncher.pdb
+D:\Git\MinecraftLauncher\obj\Release\MinecraftLauncher.csprojResolveAssemblyReference.cache
+D:\Git\MinecraftLauncher\obj\Release\MinecraftLauncher.MainForm.resources
+D:\Git\MinecraftLauncher\obj\Release\MinecraftLauncher.Properties.Resources.resources
+D:\Git\MinecraftLauncher\obj\Release\MinecraftLauncher.csproj.GenerateResource.Cache
+D:\Git\MinecraftLauncher\obj\Release\MinecraftLauncher.exe
+D:\Git\MinecraftLauncher\obj\Release\MinecraftLauncher.pdb
